@@ -1,0 +1,38 @@
+@{
+    ViewData["Title"] = "Verificación pendiente";
+    var token = (string)ViewBag.Token;
+    var verifyUrl = (string)ViewBag.VerifyUrl;
+    var email = (string)ViewBag.Email;
+}
+<h2>Revisá tu email</h2>
+<p>Enviamos un correo a <strong>@email</strong> con un enlace de verificación.</p>
+<p><em>simulá el clic abriendo esta URL en otra pestaña:</p>
+<p><a href="@verifyUrl">@verifyUrl</a></p>
+
+<hr />
+<p>Esta página está esperando la verificación en tiempo real…</p>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+
+<script>
+  const connection = new signalR.HubConnectionBuilder()
+    .withUrl("/hubs/verification")
+    .withAutomaticReconnect()
+    .build();
+
+  connection.on("Verified", () => {
+      window.location.href = "/Home/Index"; // redirige cuando llega el evento
+  });
+
+  async function start() {
+    try {
+      await connection.start();
+      await connection.invoke("JoinVerification", "@token");
+      console.log("Suscripto al token:", "@token");
+    } catch (err) {
+      console.error("Error iniciando SignalR:", err);
+      setTimeout(start, 2000);
+    }
+  }
+  start();
+</script>
